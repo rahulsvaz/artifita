@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 
 class ResultScreen extends StatefulWidget {
-  const ResultScreen({super.key});
+   int answerCount;
+   ResultScreen({super.key, required this.answerCount});
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
@@ -27,7 +28,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   child: Column(
                     children: [
                       Image.asset(
-                        'assets/congrats.gif',
+                        'assets/images/congrats.png',
                         width: 180,
                       ),
                       const Text(
@@ -45,7 +46,7 @@ class _ResultScreenState extends State<ResultScreen> {
                         height: 10,
                       ),
                       RichText(
-                        text: const TextSpan(
+                        text:  TextSpan(
                           text: 'You attempt  ',
                           style: TextStyle(
                               fontSize: 16,
@@ -53,7 +54,7 @@ class _ResultScreenState extends State<ResultScreen> {
                               fontWeight: FontWeight.w500),
                           children: <TextSpan>[
                             TextSpan(
-                              text: '10 questions',
+                              text: '5 questions',
                               style: TextStyle(color: Colors.red),
                             ),
                             TextSpan(
@@ -62,7 +63,7 @@ class _ResultScreenState extends State<ResultScreen> {
                               TextStyle(fontSize: 16, color: Colors.black),
                             ),
                             TextSpan(
-                              text: '5 answers',
+                              text: '${widget.answerCount} answers',
                               style:
                               TextStyle(fontSize: 16, color: Colors.green),
                             ),
@@ -92,6 +93,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   foregroundColor: Colors.white,
                 ),
                 onPressed: () {
+                  widget.answerCount =0;
                   Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(

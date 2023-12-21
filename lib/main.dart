@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:artifita/controller/api_calls.dart';
+import 'package:artifita/model/database/question_local_storage.dart';
+import 'package:artifita/model/quiz_model.dart';
 import 'package:artifita/view/colors.dart';
 import 'package:artifita/view/start_screen.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +14,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Directory directory = await getApplicationDocumentsDirectory();
   Hive.init(directory.path);
-  await Hive.openBox('QuestionBox');
+  Hive.registerAdapter(QuestionAdapter());
+  await Hive.openBox<QuizModel>('QuestionBox');
+
   
 
   Provider.debugCheckInvalidValueType == null;

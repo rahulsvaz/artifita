@@ -1,12 +1,11 @@
 import 'dart:convert';
 
 import 'package:artifita/model/quiz_model.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
+
 
 class ApiCalls with ChangeNotifier {
-
   List<QuizModel> quizList = [];
 
   Future<List<QuizModel>> getDataFromApi() async {
@@ -23,8 +22,5 @@ class ApiCalls with ChangeNotifier {
     }
 
     return quizList;
-
   }
 }
-
-

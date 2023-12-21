@@ -2,6 +2,7 @@ import 'package:artifita/controller/api_calls.dart';
 import 'package:artifita/model/quiz_model.dart';
 import 'package:artifita/model/quiz_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:provider/provider.dart';
 import 'result_screen.dart';
@@ -12,7 +13,7 @@ class QuizScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => QuizProvider(),
-      child: const  QuizScreenBody(),
+      child: const QuizScreenBody(),
     );
   }
 }
@@ -28,11 +29,20 @@ class QuizScreenBody extends StatelessWidget {
         future: apiController.getDataFromApi(),
         builder: (context, AsyncSnapshot<List<QuizModel>> snapshot) {
           final data = snapshot.data;
+
           if (data == null) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           } else {
+            final quizBox = Hive.box<QuizModel>('QuestionBox');
+
+            quizBox.add(data[0]);
+
+            final q = quizBox.getAt(0);
+
+            print(q!.question.toString());
+
             return QuestionWidget(data: data);
           }
         },
@@ -43,8 +53,9 @@ class QuizScreenBody extends StatelessWidget {
 
 class QuestionWidget extends StatelessWidget {
   final List<QuizModel> data;
+  int answerCount = 0;
 
- const  QuestionWidget({Key? key, required this.data}) : super(key: key);
+  QuestionWidget({Key? key, required this.data}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -103,6 +114,8 @@ class QuestionWidget extends StatelessWidget {
                             .options[count]
                             .isCorrect) {
                           quizProvider.setCorrectOptionIndex(count);
+                          answerCount = answerCount + 1;
+                          print(answerCount.toString());
                         } else {
                           quizProvider.setCorrectOptionIndex(data[
                                   quizProvider.currentIndex <= 4
@@ -161,7 +174,9 @@ class QuestionWidget extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ResultScreen(),
+                    builder: (context) => ResultScreen(
+                      answerCount: answerCount,
+                    ),
                   ),
                 );
               } else {
