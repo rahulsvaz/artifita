@@ -51,11 +51,39 @@ class QuizScreenBody extends StatelessWidget {
   }
 }
 
-class QuestionWidget extends StatelessWidget {
+class QuestionWidget extends StatefulWidget {
   final List<QuizModel> data;
-  int answerCount = 0;
 
   QuestionWidget({Key? key, required this.data}) : super(key: key);
+
+  @override
+  State<QuestionWidget> createState() => _QuestionWidgetState();
+}
+
+class _QuestionWidgetState extends State<QuestionWidget> {
+  int answerCount = 0;
+
+  double counter = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Start the function to increase the counter
+    increaseCounter();
+  }
+
+  void increaseCounter() {
+    Future.delayed(Duration(seconds: 1), () {
+      if (counter < 0.9) {
+        // Increase the counter every second up to 60 seconds (1 minute)
+        setState(() {
+          counter = counter + .1;
+        });
+        increaseCounter(); // Call the function recursively
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,12 +100,13 @@ class QuestionWidget extends StatelessWidget {
         ),
         LinearPercentIndicator(
           lineHeight: 30,
-          percent: 0.5,
+          isRTL: true,
+          percent: counter,
           barRadius: const Radius.circular(20),
           progressColor: const Color(0xFFC353D6),
           backgroundColor: const Color(0xFF6C2677),
-          center: const Text(
-            '40',
+          center: Text(
+            counter.toString(),
             style: TextStyle(color: Colors.white),
           ),
         ),
@@ -87,7 +116,10 @@ class QuestionWidget extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 30),
           child: Text(
-            data[quizProvider.currentIndex <= 4 ? quizProvider.currentIndex : 4]
+            widget
+                .data[quizProvider.currentIndex <= 4
+                    ? quizProvider.currentIndex
+                    : 4]
                 .question
                 .toString(),
             style: const TextStyle(color: Colors.white, fontSize: 20),
@@ -96,7 +128,7 @@ class QuestionWidget extends StatelessWidget {
         ListView.builder(
           shrinkWrap: true,
           itemCount: quizProvider.currentIndex <= 4
-              ? data[quizProvider.currentIndex].options.length
+              ? widget.data[quizProvider.currentIndex].options.length
               : 4,
           itemBuilder: (context, count) {
             return Padding(
@@ -110,17 +142,16 @@ class QuestionWidget extends StatelessWidget {
                         quizProvider.setAnswerCount(count);
                         quizProvider.setAnswer(true);
                         quizProvider.setOptionsEnabled(false);
-                        if (data[quizProvider.currentIndex]
-                            .options[count]
-                            .isCorrect) {
+                        if (widget.data[quizProvider.currentIndex]
+                            .options[count].isCorrect) {
                           quizProvider.setCorrectOptionIndex(count);
                           answerCount = answerCount + 1;
                           print(answerCount.toString());
                         } else {
-                          quizProvider.setCorrectOptionIndex(data[
-                                  quizProvider.currentIndex <= 4
-                                      ? quizProvider.currentIndex
-                                      : 4]
+                          quizProvider.setCorrectOptionIndex(widget
+                              .data[quizProvider.currentIndex <= 4
+                                  ? quizProvider.currentIndex
+                                  : 4]
                               .options
                               .indexWhere((option) => option.isCorrect));
                         }
@@ -129,8 +160,7 @@ class QuestionWidget extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     color: quizProvider.answerCount == count
-                        ? data[quizProvider.currentIndex]
-                                .options[count]
+                        ? widget.data[quizProvider.currentIndex].options[count]
                                 .isCorrect
                             ? Colors.green
                             : Colors.red
@@ -149,7 +179,7 @@ class QuestionWidget extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        "${count + 1} .  ${data[quizProvider.currentIndex <= 4 ? quizProvider.currentIndex : 4].options[count].text.toString()}",
+                        "${count + 1} .  ${widget.data[quizProvider.currentIndex <= 4 ? quizProvider.currentIndex : 4].options[count].text.toString()}",
                         textAlign: TextAlign.left,
                         style: const TextStyle(
                           color: Colors.white,
@@ -170,7 +200,7 @@ class QuestionWidget extends StatelessWidget {
           visible: quizProvider.answer,
           child: ElevatedButton(
             onPressed: () {
-              if (quizProvider.currentIndex == data.length - 1) {
+              if (quizProvider.currentIndex == widget.data.length - 1) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
