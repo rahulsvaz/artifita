@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onPressed: () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const QuizPage()),
+          MaterialPageRoute(builder: (context) =>  QuizScreen()),
         );
       },
       style: ElevatedButton.styleFrom(

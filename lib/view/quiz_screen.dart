@@ -1,21 +1,27 @@
 import 'package:artifita/controller/api_calls.dart';
 import 'package:artifita/model/quiz_model.dart';
-import 'package:artifita/view/result_screen.dart';
+import 'package:artifita/model/quiz_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:provider/provider.dart';
+import 'result_screen.dart';
 
-class QuizPage extends StatefulWidget {
-  const QuizPage({Key? key}) : super(key: key);
-
-  @override
-  State<QuizPage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<QuizPage> {
+class QuizScreen extends StatelessWidget {
+  const QuizScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    final apiController = Provider.of<ApiCalls>(context);
+    return ChangeNotifierProvider(
+      create: (context) => QuizProvider(),
+      child: const  QuizScreenBody(),
+    );
+  }
+}
+
+class QuizScreenBody extends StatelessWidget {
+  const QuizScreenBody({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final apiController = ApiCalls(); // Initialize your controller here
 
     return Scaffold(
       body: FutureBuilder(
@@ -27,13 +33,7 @@ class _HomePageState extends State<QuizPage> {
               child: CircularProgressIndicator(),
             );
           } else {
-            return ListView.builder(
-              shrinkWrap: true,
-              itemCount: 1,
-              itemBuilder: (context, index) {
-                return  QuestionWidget(index: index, data: data);
-              },
-            );
+            return QuestionWidget(data: data);
           }
         },
       ),
@@ -41,32 +41,19 @@ class _HomePageState extends State<QuizPage> {
   }
 }
 
-class QuestionWidget extends StatefulWidget {
-  int index;
+class QuestionWidget extends StatelessWidget {
   final List<QuizModel> data;
 
-  QuestionWidget({Key? key, required this.index, required this.data})
-      : super(key: key);
-
-  @override
-  State<QuestionWidget> createState() => _QuestionWidgetState();
-}
-
-class _QuestionWidgetState extends State<QuestionWidget> {
-  int answerCount = -1;
-  bool answer = false;
-
-  bool isOptionsEnabled =
-      true; // Added flag to control interaction with options
-  int correctOptionIndex = -1;
+ const  QuestionWidget({Key? key, required this.data}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final quizProvider = Provider.of<QuizProvider>(context);
+
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(
@@ -83,27 +70,23 @@ class _QuestionWidgetState extends State<QuestionWidget> {
             style: TextStyle(color: Colors.white),
           ),
         ),
-        const SizedBox(
-          height: 100,
+        SizedBox(
+          height: height * 0.05,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 30),
-          child:
-          widget.index<=4?
-
-          Text(
-
-            widget.data[widget.index<=4?widget.index:4].question.toString(),
+          child: Text(
+            data[quizProvider.currentIndex <= 4 ? quizProvider.currentIndex : 4]
+                .question
+                .toString(),
             style: const TextStyle(color: Colors.white, fontSize: 20),
-          ): null
-        ),
-        SizedBox(
-          height: height * 0.02,
+          ),
         ),
         ListView.builder(
           shrinkWrap: true,
-          itemCount:widget.index<=4?
-           widget.data[widget.index].options.length:4,
+          itemCount: quizProvider.currentIndex <= 4
+              ? data[quizProvider.currentIndex].options.length
+              : 4,
           itemBuilder: (context, count) {
             return Padding(
               padding: EdgeInsets.symmetric(
@@ -111,34 +94,36 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                 vertical: height * 0.009,
               ),
               child: GestureDetector(
-                onTap: isOptionsEnabled
+                onTap: quizProvider.isOptionsEnabled
                     ? () {
-                        setState(() {
-                          answerCount = count;
-                          answer = true;
-                          isOptionsEnabled =
-                              false; // Disable interaction with other options
-                          if (widget
-                              .data[widget.index<=4?widget.index:4].options[count].isCorrect) {
-                            correctOptionIndex = count;
-                          } else {
-                            // Change color to green for the correct option
-                            correctOptionIndex = widget
-                                .data[widget.index<=4?widget.index:4].options
-                                .indexWhere((option) => option.isCorrect);
-                          }
-                        });
+                        quizProvider.setAnswerCount(count);
+                        quizProvider.setAnswer(true);
+                        quizProvider.setOptionsEnabled(false);
+                        if (data[quizProvider.currentIndex]
+                            .options[count]
+                            .isCorrect) {
+                          quizProvider.setCorrectOptionIndex(count);
+                        } else {
+                          quizProvider.setCorrectOptionIndex(data[
+                                  quizProvider.currentIndex <= 4
+                                      ? quizProvider.currentIndex
+                                      : 4]
+                              .options
+                              .indexWhere((option) => option.isCorrect));
+                        }
                       }
-                    : null, // Set onTap to null if options are disabled
+                    : null,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: answerCount == count
-                        ? widget.data[widget.index<=4?widget.index:4].options[count].isCorrect
+                    color: quizProvider.answerCount == count
+                        ? data[quizProvider.currentIndex]
+                                .options[count]
+                                .isCorrect
                             ? Colors.green
                             : Colors.red
-                        : (count == correctOptionIndex && answer)
-                            ? Colors
-                                .green // Change color to green for the correct option
+                        : (count == quizProvider.correctOptionIndex &&
+                                quizProvider.answer)
+                            ? Colors.green
                             : Colors.transparent,
                     borderRadius: const BorderRadius.all(
                       Radius.circular(15),
@@ -150,11 +135,8 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                     padding: EdgeInsets.only(left: width * 0.04),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child:
-                      
-
-                      Text(
-                        "${count + 1} .  ${widget.data[widget.index<=4? widget.index:4].options[count].text.toString()}",
+                      child: Text(
+                        "${count + 1} .  ${data[quizProvider.currentIndex <= 4 ? quizProvider.currentIndex : 4].options[count].text.toString()}",
                         textAlign: TextAlign.left,
                         style: const TextStyle(
                           color: Colors.white,
@@ -172,10 +154,10 @@ class _QuestionWidgetState extends State<QuestionWidget> {
           height: height * 0.03,
         ),
         Visibility(
-          visible: answer,
+          visible: quizProvider.answer,
           child: ElevatedButton(
             onPressed: () {
-              if (widget.data.length == 4) {
+              if (quizProvider.currentIndex == data.length - 1) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -183,23 +165,8 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                   ),
                 );
               } else {
-                setState(() {
-                  answer = false;
-                  isOptionsEnabled =
-                      true; // Enable interaction with options for the next question
-                  correctOptionIndex = -1;
-                  if (widget.index != widget.data.length) {
-                    widget.index += 1;
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ResultScreen(),
-                      ),
-                    );
-                  }
-                  answerCount = -1;
-                });
+                quizProvider.resetState();
+                quizProvider.incrementIndex();
               }
             },
             style: ElevatedButton.styleFrom(
